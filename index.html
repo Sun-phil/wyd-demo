@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#2f4a7d">
+<title>WYD 순례자 관리 · 이 PC 시험용</title>
+<style>
+:root{--bg:#f4f3ee;--card:#fff;--ink:#1d2127;--mute:#69717d;--line:#e2e0d8;--ac:#2f4a7d;--acink:#fff;--ok:#1d6b3a;--okbg:#e1f2e7;--wn:#855500;--wnbg:#fcefcf;--bd:#a1260f;--bdbg:#fbe3dd}
+@media (prefers-color-scheme:dark){:root{--bg:#14161a;--card:#1e2128;--ink:#eceef1;--mute:#9aa3b2;--line:#31353e;--ac:#8fb0ee;--acink:#0f1a30;--ok:#7fd59b;--okbg:#16301f;--wn:#f0c160;--wnbg:#3a2e12;--bd:#ff9b86;--bdbg:#3d1a14}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--ac);color:var(--acink);padding:calc(10px + env(safe-area-inset-top)) 14px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{font-size:16px;margin:0}
+header small{opacity:.85}
+main{max-width:720px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sp{justify-content:space-between}.grow{flex:1;min-width:0}
+input,select,textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+input[type=checkbox]{width:22px;height:22px;flex:none}
+label{display:block;font-size:13px;color:var(--mute);margin:10px 0 3px}
+.btn{font:inherit;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-height:44px}
+.btn.p{background:var(--ac);color:var(--acink);border-color:var(--ac);font-weight:600}
+.btn.d{color:var(--bd)}
+.btn.s{min-height:36px;padding:6px 10px;font-size:14px}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+.pill.ok{background:var(--okbg);color:var(--ok);border-color:transparent}.pill.wn{background:var(--wnbg);color:var(--wn);border-color:transparent}.pill.bd{background:var(--bdbg);color:var(--bd);border-color:transparent}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px}.chips button{flex:none;font:inherit;font-size:14px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink)}.chips button.on{background:var(--ac);color:var(--acink);border-color:var(--ac)}
+.g{border-left:6px solid var(--line)}.g.ok{border-left-color:var(--ok)}.g.wn{border-left-color:#d19a1f}.g.bd{border-left-color:var(--bd)}.g.aw{border-left-color:var(--mute)}
+.g.out{border-left-color:var(--mute)}
+.nm{font-weight:700}.mt{color:var(--mute);font-size:14px}
+.step{display:flex;align-items:center;gap:6px}.step button{width:46px;height:46px;font-size:24px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.step .n{min-width:64px;text-align:center;font-size:22px;font-weight:700}
+.mem{display:flex;align-items:center;gap:12px;padding:10px 4px;border-top:1px solid var(--line)}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{flex:1;border:0;background:none;font:inherit;font-size:13px;padding:10px 0 8px;color:var(--mute)}nav button b{display:block;font-size:20px;font-weight:400}nav button.on{color:var(--ac);font-weight:700}
+dialog{border:0;border-radius:16px 16px 0 0;width:100%;max-width:720px;max-height:92vh;margin:auto auto 0;padding:14px;background:var(--card);color:var(--ink)}dialog::backdrop{background:rgba(0,0,0,.5)}
+.err{background:var(--bdbg);color:var(--bd);padding:10px 12px;border-radius:10px;margin-bottom:10px}
+.login{max-width:360px;margin:15vh auto 0;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+h2{font-size:17px;margin:4px 0 8px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<dialog id="dlg"></dialog>
+<script>
+(function(){
+"use strict";
+var S={role:null,lodgings:[],groups:[],date:today(),ck:{},ckm:{},outs:{},gf:"all",tab:"checkin",lod:"all",q:"",err:"",loading:false};
+var $=function(s){return document.querySelector(s)};
+function today(){return new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Seoul"})}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function ppl(g){return (+g.adults||0)+(+g.minors||0)}
+/* ===== 이 PC 시험용: 서버 없이 브라우저(localStorage)에 저장합니다 ===== */
+var ADMIN_PIN="123456",STAFF_PIN="000000",KEY="wyd_local_v1";
+var MEM={},memRole=null,persist=true;
+function dbl(){var raw=null;try{raw=localStorage.getItem(KEY)}catch(e){persist=false;raw=MEM[KEY]||null}try{var j=JSON.parse(raw);if(j)return j}catch(e){}return{lodgings:[],groups:[],members:[],checkins:[],cm:[],seq:{l:0,g:0,m:0}}}
+function dbs(x){var t=JSON.stringify(x);try{localStorage.setItem(KEY,t)}catch(e){persist=false;MEM[KEY]=t}}
+function str(v,m){return String(v==null?"":v).trim().slice(0,m||200)}
+function num(v,m){v=parseInt(v,10);return isNaN(v)?0:Math.max(0,Math.min(m||1000,v))}
+function dstr(v){v=str(v,10);return /^\d{4}-\d{2}-\d{2}$/.test(v)?v:""}
+function kst(){return new Date().toLocaleString("sv-SE",{timeZone:"Asia/Seoul"})}
+function role(){try{return sessionStorage.getItem("wyd_role")}catch(e){return memRole}}
+function setRole(r){try{if(r)sessionStorage.setItem("wyd_role",r);else sessionStorage.removeItem("wyd_role")}catch(e){memRole=r}}
+function need(r){if(!role())throw{status:401,message:"로그인이 필요합니다."};if(r==="admin"&&role()!=="admin")throw{status:403,message:"운영진만 사용할 수 있습니다."}}
+function api(action,data){
+  return new Promise(function(res,rej){
+    try{res(localApi(action,data||{}))}catch(e){if(e.status===401&&action!=="login"){S.role=null;render()}rej(e.message?e:new Error("오류"))}
+  });
+}
+function localApi(action,i){
+  var q={};if(action.indexOf("&")>-1){var p=action.split("&");action=p[0];p.slice(1).forEach(function(x){var kv=x.split("=");q[kv[0]]=kv[1]})}
+  var db=dbl(),now=new Date().toISOString();
+  var E=function(m){throw{status:400,message:m}};
+  switch(action){
+  case"login":
+    if(i.pin===ADMIN_PIN){setRole("admin");return{role:"admin"}}
+    if(i.pin===STAFF_PIN){setRole("staff");return{role:"staff"}}
+    throw{status:401,message:"PIN이 맞지 않습니다."};
+  case"logout":setRole(null);return{ok:true};
+  case"me":return{role:role()};
+  case"state":need("staff");
+    var gs=db.groups.slice().sort(function(a,b){return a.name.localeCompare(b.name,"ko")}).map(function(g){return Object.assign({},g,{members:db.members.filter(function(m){return m.group_id===g.id}).map(function(m){return{id:m.id,name:m.name}})})});
+    return{role:role(),lodgings:db.lodgings.slice().sort(function(a,b){return a.name.localeCompare(b.name,"ko")}),groups:gs};
+  case"checkins":need("staff");var d=dstr(q.date);if(!d)E("날짜가 올바르지 않습니다.");
+    return{outs:db.checkins.filter(function(c){return c.status==="out"&&c.date<=d}).map(function(c){return{group_id:c.group_id,date:c.date}}),rows:db.checkins.filter(function(c){return c.date===d}).map(function(c){return{group_id:c.group_id,present:c.present,status:c.status}}),members:db.cm.filter(function(c){return c.date===d}).map(function(c){return c.member_id})};
+  case"checkin_set":need("staff");
+    var dt=dstr(i.date),gid=+i.group_id,st=i.status==="away"?"away":(i.status==="out"?"out":"in");if(!dt||!gid)E("입력이 올바르지 않습니다.");
+    var pr=st!=="in"?0:num(i.present);db.checkins=db.checkins.filter(function(c){return !(c.date===dt&&c.group_id===gid)});db.checkins.push({date:dt,group_id:gid,present:pr,status:st,updated_at:now});
+    if(st!=="in"){var ids=db.members.filter(function(m){return m.group_id===gid}).map(function(m){return m.id});db.cm=db.cm.filter(function(c){return !(c.date===dt&&ids.indexOf(c.member_id)>-1)})}
+    dbs(db);return{ok:true};
+  case"checkin_clear":need("staff");
+    var dt2=dstr(i.date),g2=+i.group_id,ids2=db.members.filter(function(m){return m.group_id===g2}).map(function(m){return m.id});
+    db.checkins=db.checkins.filter(function(c){return !(c.date===dt2&&c.group_id===g2)});db.cm=db.cm.filter(function(c){return !(c.date===dt2&&ids2.indexOf(c.member_id)>-1)});dbs(db);return{ok:true};
+  case"checkin_member":need("staff");
+    var d3=dstr(i.date),mid=+i.member_id,mem=db.members.filter(function(m){return m.id===mid})[0];if(!d3||!mem)E("입력이 올바르지 않습니다.");
+    db.cm=db.cm.filter(function(c){return !(c.date===d3&&c.member_id===mid)});if(i.on)db.cm.push({date:d3,member_id:mid});
+    var ids3=db.members.filter(function(m){return m.group_id===mem.group_id}).map(function(m){return m.id});
+    var cnt=db.cm.filter(function(c){return c.date===d3&&ids3.indexOf(c.member_id)>-1}).length;
+    db.checkins=db.checkins.filter(function(c){return !(c.date===d3&&c.group_id===mem.group_id)});db.checkins.push({date:d3,group_id:mem.group_id,present:cnt,status:"in",updated_at:now});dbs(db);return{present:cnt};
+  case"save_lodging":need("admin");
+    var nm=str(i.name,100);if(!nm)E("숙소 이름을 입력하세요.");
+    var l={name:nm,type:i.type==="home"?"home":"facility",capacity:num(i.capacity),contact:str(i.contact,60),checker:i.checker==="host"?"host":"volunteer",notes:str(i.notes,300)};
+    if(i.id){var ex=db.lodgings.filter(function(x){return x.id===+i.id})[0];Object.assign(ex,l)}else{l.id=++db.seq.l;db.lodgings.push(l)}dbs(db);return{ok:true};
+  case"delete_lodging":need("admin");db.lodgings=db.lodgings.filter(function(x){return x.id!==+i.id});db.groups.forEach(function(g){if(g.lodging_id===+i.id)g.lodging_id=null});dbs(db);return{ok:true};
+  case"save_group":need("staff");
+    var gn=str(i.name,100);if(!gn)E("그룹명을 입력하세요.");
+    if(db.groups.some(function(g){return g.name.toLowerCase()===gn.toLowerCase()&&g.id!==+i.id}))E("같은 이름의 그룹이 이미 있습니다.");
+    var o={name:gn,country:str(i.country,60),language:str(i.language,60),adults:num(i.adults),minors:num(i.minors),leader:str(i.leader,80),phone:str(i.phone,40),email:str(i.email,100),arrive:dstr(i.arrive),depart:dstr(i.depart),guardian:str(i.guardian,80),diet:str(i.diet,200),lodging_id:+i.lodging_id||null,consent:i.consent?1:0,notes:str(i.notes,300)};
+    var gid2;if(i.id){gid2=+i.id;Object.assign(db.groups.filter(function(g){return g.id===gid2})[0],o)}else{o.id=++db.seq.g;o.source=role()==="admin"?"admin":"desk";o.created_at=now;o.arrived_at=i.arrived_now?kst():"";db.groups.push(o);gid2=o.id}
+    if(Array.isArray(i.members)){var want=[];i.members.forEach(function(x){x=str(x,80);if(x&&want.indexOf(x)<0)want.push(x)});
+      db.members=db.members.filter(function(m){return m.group_id!==gid2||want.indexOf(m.name)>-1});
+      want.forEach(function(w){if(!db.members.some(function(m){return m.group_id===gid2&&m.name===w}))db.members.push({id:++db.seq.m,group_id:gid2,name:w})})}
+    dbs(db);return{ok:true,id:gid2};
+  case"arrive":need("staff");var ga=db.groups.filter(function(g){return g.id===+i.group_id})[0];if(!ga)E("그룹을 찾을 수 없습니다.");ga.arrived_at=i.undo?"":kst();dbs(db);return{ok:true,arrived_at:ga.arrived_at};
+  case"delete_group":need("admin");var gd=+i.id;var mids=db.members.filter(function(m){return m.group_id===gd}).map(function(m){return m.id});
+    db.groups=db.groups.filter(function(g){return g.id!==gd});db.members=db.members.filter(function(m){return m.group_id!==gd});db.checkins=db.checkins.filter(function(c){return c.group_id!==gd});db.cm=db.cm.filter(function(c){return mids.indexOf(c.member_id)<0});dbs(db);return{ok:true};
+  case"register":
+    var r={name:str(i.name,100),country:str(i.country,60),language:str(i.language,60),leader:str(i.leader,80),phone:str(i.phone,40),arrive:dstr(i.arrive),depart:dstr(i.depart),adults:num(i.adults),minors:num(i.minors),guardian:str(i.guardian,80)};
+    if(!r.name||!r.country||!r.language||!r.leader||!r.phone||!r.arrive||!r.depart)E("Please fill in all required fields.");
+    if(r.adults+r.minors<1)E("Please enter the number of people.");if(r.depart<r.arrive)E("Departure date must be on or after the arrival date.");
+    if(r.minors>0&&!r.guardian)E("Please name the adult responsible for the minors.");if(!i.consent)E("Consent is required to register.");
+    if(db.groups.some(function(g){return g.name.toLowerCase()===r.name.toLowerCase()}))E("A group with this name is already registered. Please add the leader's name to the group name.");
+    Object.assign(r,{arrived_at:"",id:++db.seq.g,email:str(i.email,100),diet:str(i.diet,200),notes:str(i.notes,300),lodging_id:null,consent:1,source:"self",created_at:now});db.groups.push(r);dbs(db);return{ok:true};
+  case"export":need("admin");
+    var rows=[["그룹명","국가","언어","성인","미성년","대표자","연락처","이메일","도착일","출발일","미성년 담당 성인","식이 요구","배정 숙소","동의","비고","등록 경로","도착 시각"]];
+    db.groups.forEach(function(g){var l=db.lodgings.filter(function(x){return x.id===g.lodging_id})[0];rows.push([g.name,g.country,g.language,g.adults,g.minors,g.leader,g.phone,g.email,g.arrive,g.depart,g.guardian,g.diet,l?l.name:"",g.consent?"Y":"N",g.notes,g.source,g.arrived_at||""])});
+    var csv="﻿"+rows.map(function(r){return r.map(function(c){return '"'+String(c==null?"":c).replace(/"/g,'""')+'"'}).join(",")}).join("\r\n");
+    var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="pilgrim_groups.csv";document.body.appendChild(a);a.click();a.remove();return{ok:true};
+  case"purge":need("admin");if(i.confirm!=="삭제")E("확인 문구가 맞지 않습니다.");try{localStorage.removeItem(KEY)}catch(e){}delete MEM[KEY];return{ok:true};
+  }
+  E("알 수 없는 요청입니다.");
+}
+function fail(e){S.err=e.message||"오류가 발생했습니다.";render()}
+function lodById(id){return S.lodgings.filter(function(l){return l.id==id})[0]}
+function active(g,d){return !(g.arrive&&d<g.arrive)&&!(g.depart&&d>g.depart)}
+function stat(g){var c=S.ck[g.id];if(c&&c.status==="out")return{k:"out",t:"체크아웃 완료"};if(!c&&g.depart&&S.date>g.depart)return{k:"bd",t:"체크아웃 미확인"};if(!c)return{k:"bd",t:"미확인"};if(c.status==="away")return{k:"aw",t:"외박·이동"};var t=ppl(g);if(c.present>=t)return{k:"ok",t:"완료"};return{k:"wn",t:"부족 "+(t-c.present)+"명"}}
+
+function load(){
+  S.loading=true;render();
+  return api("state").then(function(j){S.role=j.role;S.lodgings=j.lodgings;S.groups=j.groups;return loadCk()}).then(function(){S.loading=false;render()}).catch(function(e){S.loading=false;fail(e)})
+}
+function loadCk(){
+  return api("checkins&date="+S.date).then(function(j){S.ck={};j.rows.forEach(function(r){S.ck[r.group_id]={present:+r.present,status:r.status}});S.outs={};(j.outs||[]).forEach(function(o){S.outs[o.group_id]=o.date});S.ckm={};j.members.forEach(function(m){S.ckm[m]=1})})
+}
+
+/* ---------- views ---------- */
+function vRegister(){
+  return '<div class="login" style="margin-top:0;max-width:560px;text-align:left;padding:12px"><div class="card"><h2>Pilgrim Group Registration</h2><div class="mt">WYD Seoul 2027 · Seodaemun Parish. One form per group. * required.</div></div><div id="rmsg"></div><form id="rf2" class="card">'
+  +'<label>Group name *</label><input name="name" required><div class="two"><div><label>Country *</label><input name="country" required></div><div><label>Main language *</label><input name="language" required></div><div><label>Adults (18+) *</label><input name="adults" type="number" min="0" value="0" required></div><div><label>Minors (under 18) *</label><input name="minors" type="number" min="0" value="0" required></div><div><label>Arrival date *</label><input name="arrive" type="date" required></div><div><label>Departure date *</label><input name="depart" type="date" required></div></div>'
+  +'<label>Group leader name *</label><input name="leader" required><label>Leader phone / WhatsApp *</label><input name="phone" type="tel" required><label>Leader email</label><input name="email" type="email"><label>Adult responsible for minors (required if minors)</label><input name="guardian"><label>Dietary needs</label><input name="diet"><label>Notes</label><input name="notes">'
+  +'<label style="display:flex;gap:10px;align-items:flex-start;color:var(--ink);margin-top:14px"><input type="checkbox" name="consent" required><span>I agree that Seodaemun Parish collects the information above only to arrange lodging and ensure safety during WYD Seoul 2027, limits access to authorised staff, and deletes it after the event.</span></label><div style="height:10px"></div><button class="btn p" style="width:100%" type="submit">Submit registration</button></form><a href="#" onclick="location.hash=\'\';return false">← 운영진 화면으로</a></div>';
+}
+function bindReg(){
+  var f=$("#rf2");if(!f)return;
+  f.onsubmit=function(e){e.preventDefault();var fd=new FormData(f),o={};fd.forEach(function(v,k){o[k]=v});o.consent=fd.get("consent")!==null;
+    api("register",o).then(function(){f.style.display="none";$("#rmsg").innerHTML='<div class="card" style="background:var(--okbg);color:var(--ok)"><b>Thank you!</b> Your group has been registered. 등록이 완료되었습니다.</div>'}).catch(function(err){$("#rmsg").innerHTML='<div class="err">'+esc(err.message)+'</div>'})};
+}
+window.addEventListener("hashchange",function(){if(location.hash!=="#register"&&S.role)load();else render()});
+
+function render(){
+  var a=$("#app");
+  if(location.hash==="#register"){a.innerHTML=vRegister();bindReg();return}
+  if(!S.role){a.innerHTML='<div class="login"><h1>WYD 순례자 관리</h1><div class="mt">서대문성당 · 이 PC 시험용 (데이터는 이 브라우저에만 저장됩니다)</div><div style="height:18px"></div>'+(S.err?'<div class="err">'+esc(S.err)+'</div>':'')+'<input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN"><div class="mt" style="margin-top:8px">시험용 PIN: 운영진 123456 / 봉사자 000000</div><div style="height:10px"></div><button class="btn p" style="width:100%" id="go">로그인</button></div>';
+    $("#go").onclick=login;$("#pin").onkeydown=function(e){if(e.key==="Enter")login()};return}
+  var adm=S.role==="admin";
+  if(!adm&&(S.tab==="lodgings"||S.tab==="admin"))S.tab="checkin";
+  var tabs=[["checkin","✔","체크인"],["groups","👥","그룹"]];if(adm){tabs.push(["lodgings","🏠","숙소"]);tabs.push(["admin","⚙","관리"])}
+  var body=S.tab==="checkin"?vCheck():S.tab==="groups"?vGroups():S.tab==="lodgings"?vLod():vAdmin();
+  a.innerHTML='<header><div><h1>WYD 순례자 관리</h1><small>'+(adm?"운영진":"봉사자")+' 모드 · 이 PC 시험용</small></div><button class="btn s" id="out">로그아웃</button></header><main>'+(persist?'':'<div class="err">이 브라우저에서는 데이터가 저장되지 않습니다. 창을 닫으면 사라집니다.</div>')+(S.err?'<div class="err">'+esc(S.err)+'</div>':'')+(S.loading?'<div class="mt">불러오는 중…</div>':'')+body+'</main><nav>'+tabs.map(function(t){return '<button data-t="'+t[0]+'" class="'+(S.tab===t[0]?"on":"")+'"><b>'+t[1]+'</b>'+t[2]+'</button>'}).join("")+'</nav>';
+  $("#out").onclick=function(){api("logout",{}).then(function(){S.role=null;S.err="";render()})};
+  document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){S.tab=b.dataset.t;S.err="";render()}});
+  bind();
+}
+function login(){api("login",{pin:$("#pin").value}).then(function(j){S.role=j.role;S.tab="checkin";S.err="";load()}).catch(function(e){S.err=e.message;render()})}
+
+function vCheck(){
+  var d=S.date,gs=S.groups.filter(function(g){if(S.outs[g.id]&&S.outs[g.id]<d)return false;return active(g,d)||(g.depart&&d>g.depart)});
+  var cnt={ok:0,wn:0,bd:0,aw:0,out:0};gs.forEach(function(g){cnt[stat(g).k]++});
+  var shown=gs.filter(function(g){return S.lod==="all"||(S.lod==="none"?!g.lodging_id:g.lodging_id==S.lod)});
+  var h='<div class="card row"><div class="grow"><label style="margin-top:0">날짜</label><input type="date" id="date" value="'+esc(d)+'"></div><button class="btn" id="rf" style="align-self:flex-end">새로고침</button></div>';
+  h+='<div class="row" style="margin-bottom:8px"><span class="pill ok">완료 '+cnt.ok+'</span><span class="pill wn">부족 '+cnt.wn+'</span><span class="pill bd">미확인 '+cnt.bd+'</span><span class="pill">외박·이동 '+cnt.aw+'</span><span class="pill">체크아웃 '+cnt.out+'</span></div>';
+  h+='<div class="chips"><button data-lod="all" class="'+(S.lod==="all"?"on":"")+'">전체</button>'+S.lodgings.map(function(l){return '<button data-lod="'+l.id+'" class="'+(S.lod==l.id?"on":"")+'">'+esc(l.name)+'</button>'}).join("")+'<button data-lod="none" class="'+(S.lod==="none"?"on":"")+'">미배정</button></div>';
+  if(!shown.length)h+='<div class="card mt" style="text-align:center">이 날짜에 체류하는 그룹이 없습니다.</div>';
+  shown.forEach(function(g){
+    var st=stat(g),c=S.ck[g.id],t=ppl(g),cur=c&&c.status==="in"?c.present:0,l=lodById(g.lodging_id);
+    h+='<div class="card g '+st.k+'" data-gid="'+g.id+'"><div class="row sp"><div class="grow"><div class="nm">'+esc(g.name)+'</div><div class="mt">'+esc(g.country)+' · '+t+'명'+(g.minors?' (미성년 '+g.minors+')':'')+' · '+(l?esc(l.name):'숙소 미배정')+(g.depart===d&&!(c&&c.status==='out')?' · <b>오늘 출발</b>':'')+'</div></div><span class="pill '+(st.k==="aw"||st.k==="out"?"":st.k)+'">'+st.t+'</span></div>';
+    h+='<div class="mt" style="margin:4px 0 8px">대표 '+esc(g.leader)+' · <a href="tel:'+esc(g.phone)+'">'+esc(g.phone)+'</a></div>';
+    if(g.members.length){
+      h+='<details'+(c&&c.status==="in"?" open":"")+'><summary class="mt">명단 확인 ('+g.members.filter(function(m){return S.ckm[m.id]}).length+'/'+g.members.length+')</summary>'+g.members.map(function(m){return '<label class="mem" style="margin:0;color:var(--ink);font-size:16px"><input type="checkbox" data-mid="'+m.id+'"'+(S.ckm[m.id]?" checked":"")+'><span>'+esc(m.name)+'</span></label>'}).join("")+'</details><div style="height:6px"></div>';
+    }
+    h+='<div class="row sp"><div class="step"><button data-dec="'+g.id+'" aria-label="줄이기">−</button><div class="n">'+cur+' / '+t+'</div><button data-inc="'+g.id+'" aria-label="늘리기">+</button></div><div class="row"><button class="btn p s" data-all="'+g.id+'">전원</button><button class="btn s" data-away="'+g.id+'">외박·이동</button><button class="btn s" data-out="'+g.id+'">체크아웃</button></div></div>';
+    if(c)h+='<div style="margin-top:6px"><button class="btn s" data-clr="'+g.id+'">기록 지우기</button></div>';
+    h+='</div>';
+  });
+  return h;
+}
+function vGroups(){
+  var adm=S.role==="admin",q=S.q.toLowerCase();
+  var gs=S.groups.filter(function(g){return (!q||(g.name+" "+g.country+" "+g.leader).toLowerCase().indexOf(q)>-1)&&(S.gf==="all"||(S.gf==="before"?!g.arrived_at:!!g.arrived_at))});
+  var h='<div class="row" style="margin-bottom:8px"><input id="q" class="grow" placeholder="그룹·국가·대표자 검색" value="'+esc(S.q)+'"><button class="btn" id="rf">새로고침</button><button class="btn p" id="addg">+ 추가</button></div>';
+  var tot=S.groups.reduce(function(s,g){return s+ppl(g)},0);
+  h+='<div class="row" style="margin-bottom:8px"><span class="pill">그룹 '+S.groups.length+'</span><span class="pill">총 '+tot+'명</span><span class="pill '+(S.groups.some(function(g){return !g.lodging_id})?"wn":"ok")+'">미배정 '+S.groups.filter(function(g){return !g.lodging_id}).length+'</span>'+(adm&&S.groups.some(function(g){return g.source==="self"})?'<span class="pill">직접 등록 '+S.groups.filter(function(g){return g.source==="self"}).length+'</span>':'')+'</div>';
+  h+='<div class="chips">'+[["all","전체"],["before","도착 전 "+S.groups.filter(function(g){return !g.arrived_at}).length],["arrived","도착함 "+S.groups.filter(function(g){return !!g.arrived_at}).length]].map(function(x){return '<button data-gf="'+x[0]+'" class="'+(S.gf===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div>';
+  if(!gs.length)h+='<div class="card mt" style="text-align:center">그룹이 없습니다.</div>';
+  gs.forEach(function(g){
+    var l=lodById(g.lodging_id),warn=[];
+    if(!l)warn.push("숙소 미배정");if(g.minors&&!g.guardian)warn.push("미성년 담당 성인 없음");if(!g.consent)warn.push("동의 미확인");
+    h+='<div class="card" data-edit="'+g.id+'"><div class="row sp"><div class="nm">'+esc(g.name)+'</div><span class="pill">'+ppl(g)+'명</span></div><div class="mt">'+esc(g.country)+' · '+esc(g.language)+' · '+esc(g.arrive||"?")+' → '+esc(g.depart||"?")+'</div><div class="mt">'+(l?"숙소: "+esc(l.name):"")+'</div>'+(g.diet?'<div class="mt">식이: '+esc(g.diet)+'</div>':'')+(warn.length?'<div style="margin-top:4px">'+warn.map(function(w){return '<span class="pill wn">'+esc(w)+'</span> '}).join("")+'</div>':'')+'<div class="row sp" style="margin-top:8px">'+(g.arrived_at?'<span class="pill ok">도착 '+esc(g.arrived_at.slice(5,16))+'</span>':'<span class="pill">도착 전</span>')+'<button class="btn s'+(g.arrived_at?'':' p')+'" data-arr="'+g.id+'">'+(g.arrived_at?"도착 취소":"도착 확인")+'</button></div></div>';
+  });
+  return h;
+}
+function peak(l){
+  var gs=S.groups.filter(function(g){return g.lodging_id==l.id&&g.arrive&&g.depart});if(!gs.length)return 0;
+  var min=gs.map(function(g){return g.arrive}).sort()[0],max=gs.map(function(g){return g.depart}).sort().reverse()[0],best=0,d=new Date(min+"T00:00:00Z"),e=new Date(max+"T00:00:00Z"),n=0;
+  while(d<=e&&n++<200){var ds=d.toISOString().slice(0,10),t=gs.filter(function(g){return active(g,ds)}).reduce(function(s,g){return s+ppl(g)},0);if(t>best)best=t;d.setUTCDate(d.getUTCDate()+1)}
+  return best;
+}
+function vLod(){
+  var h='<div class="row sp" style="margin-bottom:8px"><h2 style="margin:0">숙소</h2><button class="btn p" id="addl">+ 추가</button></div>';
+  if(!S.lodgings.length)h+='<div class="card mt" style="text-align:center">등록된 숙소가 없습니다.</div>';
+  S.lodgings.forEach(function(l){
+    var p=peak(l),over=l.capacity&&p>l.capacity;
+    h+='<div class="card" data-editl="'+l.id+'"><div class="row sp"><div class="nm">'+esc(l.name)+'</div><span class="pill '+(over?"bd":"ok")+'">'+(over?"정원 초과":"여유")+'</span></div><div class="mt">'+(l.type==="home"?"홈스테이":"시설")+' · 정원 '+l.capacity+'명 · 기간 내 최대 배정 '+p+'명</div><div class="mt">'+(l.checker==="host"?"호스트 가정이 체크":"봉사자 순회 체크")+(l.contact?' · '+esc(l.contact):'')+'</div></div>';
+  });
+  return h;
+}
+function vAdmin(){
+  var url=location.href.split("#")[0]+"#register";
+  return '<div class="card"><h2>순례자 등록 링크</h2><div class="mt">영문 등록 폼입니다. 새 탭에서 열어 순례자 대표 화면을 시험해 보세요.</div><div style="margin-top:6px"><a href="#register" target="_blank">등록 폼 열기</a></div><input readonly value="'+esc(url)+'" id="rl" style="margin:8px 0"><button class="btn" id="cpl">링크 복사</button></div>'
+   +'<div class="card"><h2>내보내기</h2><div class="mt">그룹 명단을 CSV(엑셀)로 저장합니다.</div><div style="height:8px"></div><button class="btn" id="exp">CSV 내려받기</button></div>'
+   +'<div class="card"><h2>행사 후 데이터 삭제</h2><div class="mt">모든 그룹, 숙소, 체크인 기록이 영구 삭제됩니다. 필요하면 먼저 내보내기를 하세요.</div><label>확인을 위해 "삭제"를 입력</label><input id="pg" autocomplete="off"><div style="height:8px"></div><button class="btn d" id="purge">모두 삭제</button></div>';
+}
+
+/* ---------- events ---------- */
+function setCk(g,present,status){
+  S.ck[g]={present:present,status:status};if(status==="out")S.outs[g]=S.date;else if(S.outs[g]===S.date)delete S.outs[g];render();
+  api("checkin_set",{date:S.date,group_id:g,present:present,status:status}).catch(function(e){fail(e);loadCk().then(render)});
+}
+function bind(){
+  var el;
+  if(el=$("#rf"))el.onclick=function(){load()};
+  if(el=$("#date"))el.onchange=function(){S.date=this.value||today();loadCk().then(render).catch(fail)};
+  document.querySelectorAll("[data-lod]").forEach(function(b){b.onclick=function(){S.lod=b.dataset.lod;render()}});
+  var gid=function(id){return S.groups.filter(function(g){return g.id==id})[0]};
+  document.querySelectorAll("[data-inc]").forEach(function(b){b.onclick=function(){var g=gid(b.dataset.inc),c=S.ck[g.id],cur=c&&c.status==="in"?c.present:0;setCk(g.id,Math.min(ppl(g),cur+1),"in")}});
+  document.querySelectorAll("[data-dec]").forEach(function(b){b.onclick=function(){var g=gid(b.dataset.dec),c=S.ck[g.id],cur=c&&c.status==="in"?c.present:0;setCk(g.id,Math.max(0,cur-1),"in")}});
+  document.querySelectorAll("[data-all]").forEach(function(b){b.onclick=function(){var g=gid(b.dataset.all);g.members.forEach(function(m){S.ckm[m.id]=1});setCk(g.id,ppl(g),"in");g.members.forEach(function(m){api("checkin_member",{date:S.date,member_id:m.id,on:true}).catch(function(){})})}});
+  document.querySelectorAll("[data-away]").forEach(function(b){b.onclick=function(){var g=gid(b.dataset.away);g.members.forEach(function(m){delete S.ckm[m.id]});setCk(g.id,0,"away")}});
+  document.querySelectorAll("[data-out]").forEach(function(b){b.onclick=function(){var g=gid(b.dataset.out);g.members.forEach(function(m){delete S.ckm[m.id]});setCk(g.id,0,"out")}});
+  document.querySelectorAll("[data-clr]").forEach(function(b){b.onclick=function(){var g=gid(b.dataset.clr);delete S.ck[g.id];if(S.outs[g.id]===S.date)delete S.outs[g.id];g.members.forEach(function(m){delete S.ckm[m.id]});render();api("checkin_clear",{date:S.date,group_id:g.id}).catch(fail)}});
+  document.querySelectorAll("[data-mid]").forEach(function(b){b.onchange=function(){var mid=+b.dataset.mid,on=b.checked;if(on)S.ckm[mid]=1;else delete S.ckm[mid];
+    api("checkin_member",{date:S.date,member_id:mid,on:on}).then(function(j){var g=S.groups.filter(function(x){return x.members.some(function(m){return m.id===mid})})[0];S.ck[g.id]={present:j.present,status:"in"};render()}).catch(function(e){fail(e);loadCk().then(render)})}});
+  if(el=$("#q"))el.oninput=function(){S.q=this.value;var p=this.selectionStart;render();var n=$("#q");n.focus();n.setSelectionRange(p,p)};
+  if(el=$("#addg"))el.onclick=function(){gDlg(null)};
+  document.querySelectorAll("[data-gf]").forEach(function(b){b.onclick=function(){S.gf=b.dataset.gf;render()}});
+  document.querySelectorAll("[data-arr]").forEach(function(b){b.onclick=function(e){e.stopPropagation();var g=gid(b.dataset.arr);api("arrive",{group_id:g.id,undo:!!g.arrived_at}).then(function(j){g.arrived_at=j.arrived_at;render()}).catch(fail)}});
+  document.querySelectorAll("[data-edit]").forEach(function(c){c.onclick=function(){gDlg(gid(c.dataset.edit))}});
+  if(el=$("#addl"))el.onclick=function(){lDlg(null)};
+  document.querySelectorAll("[data-editl]").forEach(function(c){c.onclick=function(){lDlg(lodById(c.dataset.editl))}});
+  if(el=$("#cpl"))el.onclick=function(){var i=$("#rl"),btn=this;i.select();try{navigator.clipboard.writeText(i.value);btn.textContent="복사됨"}catch(e){document.execCommand("copy");btn.textContent="복사됨"}};
+  if(el=$("#exp"))el.onclick=function(){api("export",{}).catch(fail)};
+  if(el=$("#purge"))el.onclick=function(){api("purge",{confirm:$("#pg").value}).then(function(){S.err="";load()}).catch(fail)};
+}
+
+/* ---------- dialogs ---------- */
+var dlg=$("#dlg");
+function f(n,label,v,t,extra){return '<div><label>'+label+'</label><input name="'+n+'" type="'+(t||"text")+'" value="'+esc(v)+'" '+(extra||"")+'></div>'}
+function gDlg(g){
+  var adm=S.role==="admin";g=g||{members:[],arrive:today()};
+  var ro="";
+  var opts='<option value="">미배정</option>'+S.lodgings.map(function(l){return '<option value="'+l.id+'"'+(g.lodging_id==l.id?" selected":"")+'>'+esc(l.name)+'</option>'}).join("");
+  dlg.innerHTML='<form id="gf"><h2>'+(g.id?"그룹 정보":"그룹 추가 (현장 등록)")+'</h2>'+(g.id?'<div class="mt" style="margin-bottom:6px">'+(g.arrived_at?"도착 확인: "+esc(g.arrived_at.slice(5,16)):"아직 도착 확인 전")+'</div>':'<label style="display:flex;gap:10px;align-items:center;color:var(--ink);margin:0 0 6px"><input type="checkbox" name="arrived_now" checked>지금 도착 확인</label>')+'<fieldset '+ro+' style="border:0;padding:0;margin:0"><label>그룹명 *</label><input name="name" required value="'+esc(g.name)+'">'
+   +'<div class="two">'+f("country","국가",g.country)+f("language","언어",g.language)+f("adults","성인",g.adults||0,"number",'min="0"')+f("minors","미성년",g.minors||0,"number",'min="0"')+f("leader","대표자",g.leader)+f("phone","연락처",g.phone,"tel")+f("arrive","도착일",g.arrive,"date")+f("depart","출발일",g.depart,"date")+'</div>'
+   +f("guardian","미성년 담당 성인",g.guardian)+f("diet","식이 요구",g.diet)
+   +'<label>배정 숙소</label><select name="lodging_id">'+opts+'</select>'
+   +'<label>이름 명단 (선택, 한 줄에 한 명. 개인별 체크가 필요한 그룹만)</label><textarea name="members" rows="4">'+esc((g.members||[]).map(function(m){return m.name}).join("\n"))+'</textarea>'
+   +f("notes","비고",g.notes)
+   +'<label style="display:flex;gap:10px;align-items:center;color:var(--ink)"><input type="checkbox" name="consent"'+(g.consent?" checked":"")+'>개인정보 수집·이용 동의 확인</label></fieldset>'
+   +'<div class="row sp" style="margin-top:14px"><div>'+(adm&&g.id?'<button class="btn d" type="button" id="del">삭제</button>':'')+'</div><div class="row"><button class="btn" type="button" id="cl">닫기</button><button class="btn p" type="submit">저장</button></div></div></form>';
+  dlg.showModal();
+  $("#cl").onclick=function(){dlg.close()};
+  var d=$("#del");if(d)d.onclick=function(){if(d.dataset.a){api("delete_group",{id:g.id}).then(function(){dlg.close();load()}).catch(fail)}else{d.dataset.a=1;d.textContent="한 번 더 누르면 삭제"}};
+  $("#gf").onsubmit=function(e){e.preventDefault();var fd=new FormData(e.target),o={id:g.id};
+    ["name","country","language","adults","minors","leader","phone","arrive","depart","guardian","diet","lodging_id","notes"].forEach(function(k){o[k]=fd.get(k)});
+    o.consent=fd.get("consent")!==null;o.arrived_now=fd.get("arrived_now")!==null;o.members=String(fd.get("members")||"").split("\n");
+    api("save_group",o).then(function(){dlg.close();S.err="";load()}).catch(function(e){dlg.close();fail(e)})};
+}
+function lDlg(l){
+  l=l||{};
+  dlg.innerHTML='<form id="lf"><h2>'+(l.id?"숙소 수정":"숙소 추가")+'</h2><label>숙소 이름 *</label><input name="name" required value="'+esc(l.name)+'"><div class="two"><div><label>유형</label><select name="type"><option value="facility"'+(l.type!=="home"?" selected":"")+'>시설</option><option value="home"'+(l.type==="home"?" selected":"")+'>홈스테이</option></select></div>'+f("capacity","정원(명)",l.capacity||0,"number",'min="0"')+f("contact","연락처",l.contact,"tel")+'<div><label>체크인 확인 담당</label><select name="checker"><option value="volunteer"'+(l.checker!=="host"?" selected":"")+'>봉사자 순회</option><option value="host"'+(l.checker==="host"?" selected":"")+'>호스트 가정</option></select></div></div>'+f("notes","비고",l.notes)
+   +'<div class="row sp" style="margin-top:14px"><div>'+(l.id?'<button class="btn d" type="button" id="del">삭제</button>':'')+'</div><div class="row"><button class="btn" type="button" id="cl">닫기</button><button class="btn p" type="submit">저장</button></div></div></form>';
+  dlg.showModal();$("#cl").onclick=function(){dlg.close()};
+  var d=$("#del");if(d)d.onclick=function(){if(d.dataset.a){api("delete_lodging",{id:l.id}).then(function(){dlg.close();load()}).catch(fail)}else{d.dataset.a=1;d.textContent="한 번 더 누르면 삭제"}};
+  $("#lf").onsubmit=function(e){e.preventDefault();var fd=new FormData(e.target),o={id:l.id};["name","type","capacity","contact","checker","notes"].forEach(function(k){o[k]=fd.get(k)});
+    api("save_lodging",o).then(function(){dlg.close();S.err="";load()}).catch(function(e){dlg.close();fail(e)})};
+}
+
+/* ---------- start ---------- */
+render();
+api("me").then(function(j){if(j.role){S.role=j.role;load()}else render()}).catch(function(){render()});
+})();
+</script>
+</body>
+</html>
